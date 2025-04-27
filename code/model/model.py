@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 import model.ops as ops
-#import model.switchable_norm as sn
 
 class noise(nn.Module):
     def __init__(self,in_channels,out_channels,groups=1):
@@ -9,7 +8,6 @@ class noise(nn.Module):
         kernel_size = 3 
         padding = 1 
         features = 64
-        #sn.SwitchNorm2d(features)
         self.conv1_1 = nn.Sequential(nn.Conv2d(in_channels=in_channels,out_channels=features,kernel_size=kernel_size,padding=padding, groups=1,bias=False),nn.ReLU(inplace=True))
         self.conv1_2 = nn.Sequential(nn.Conv2d(in_channels=features,out_channels=features, kernel_size=kernel_size, padding= padding, groups=1,bias= False),nn.ReLU(inplace=True))
         self.conv1_3 = nn.Sequential(nn.Conv2d(in_channels=features,out_channels=features, kernel_size=kernel_size, padding= padding, groups=1,bias= False),nn.ReLU(inplace=True))
@@ -98,15 +96,15 @@ class Net(nn.Module):
     def __init__(self, **kwargs):
         super(Net, self).__init__()
         
-        scale = kwargs.get("scale") #value of scale is scale. 
-        multi_scale = kwargs.get("multi_scale") # value of multi_scale is multi_scale in args.
-        group = kwargs.get("group", 1) #if valule of group isn't given, group is 1.
-        kernel_size = 3 #tcw 201904091123
-        kernel_size1 = 1 #tcw 201904091123
-        padding1 = 0 #tcw 201904091124
-        padding = 1     #tcw201904091123
-        features = 64   #tcw201904091124
-        groups = 1       #tcw201904091124
+        scale = kwargs.get("scale")
+        multi_scale = kwargs.get("multi_scale")
+        group = kwargs.get("group", 1)
+        kernel_size = 3
+        kernel_size1 = 1
+        padding1 = 0
+        padding = 1
+        features = 64
+        groups = 1
         channels = 3
         features1 = 64
         self.sub_mean = ops.MeanShift((0.4488, 0.4371, 0.4040), sub=True)
@@ -123,7 +121,6 @@ class Net(nn.Module):
         self.b7 = SR(features)
         self.b8 = SR(features)
         self.denoiser = noise(channels,channels)
-        #self.conv2 = nn.Conv2d(in_channels=features,out_channels=features,kernel_size=1,padding=0,groups=1,bias=False)
         self.conv3 = nn.Sequential(nn.Conv2d(in_channels=features,out_channels=features,kernel_size=3,padding=padding,groups=1,bias=False),nn.ReLU(inplace=True))
         self.conv4 = nn.Sequential(nn.Conv2d(in_channels=features,out_channels=features,kernel_size=3,padding=padding,groups=1,bias=False),nn.ReLU(inplace=True))
         self.conv5 = nn.Sequential(nn.Conv2d(in_channels=features,out_channels=features,kernel_size=3,padding=padding,groups=1,bias=False),nn.ReLU(inplace=True))
@@ -147,19 +144,11 @@ class Net(nn.Module):
         b7 = self.b7(b6)
         b8 = self.b8(b7)
         b8 = b7 + b8 + x1     
-        #btt = self.ReLU(b8)
-        #lr_clean,x16 = self.denoiser(xt)
-        #lr_clean, lr_features = self.denoiser(lr_noise)
-        #btt = btt+lr_features
-        #denoiser_features = self.conv2(x16)
-        #btt = b8*denoiser_features
         btt = self.ReLU(b8)
         xtcw = self.ReLU(lr_clean)
         xtcw = self.conv7(xtcw)
         btt = xtcw+btt
         temp = self.upsample(btt, scale=scale)
-        #temp_t = self.upsample(x16,scale=scale)
-        #temp = temp_t + temp
         temp2 = self.ReLU(temp)
         temp3 = self.conv3(temp2)
         temp4 = self.conv4(temp3)
@@ -167,6 +156,5 @@ class Net(nn.Module):
         temp6 = temp3+temp4+temp5
         out = self.conv6(temp6)
         out = self.add_mean(out)
-        return lr_clean, out
-        #return out
-        #return out
+        #return lr_clean,out
+        return out
